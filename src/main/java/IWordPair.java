@@ -1,4 +1,5 @@
 /**
+ * @author Serj
  * Represents a feature and its associated I(E) value
  */
 public class IWordPair {

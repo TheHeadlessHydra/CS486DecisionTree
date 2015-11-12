@@ -1,7 +1,8 @@
 import java.util.Comparator;
 
 /**
- * Created by Serj on 11/11/2015.
+ * @author Serj
+ * Compares and sorts leaves using their Ivalues
  */
 public class LeafComparator implements Comparator<Leaf> {
     public int compare(Leaf o1, Leaf o2) {

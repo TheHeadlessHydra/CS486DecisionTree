@@ -1,8 +1,9 @@
 import java.util.ArrayList;
 
 /**
- * POJO for storing data
- * word wordID is present in document docID
+ * @author Serj
+ * A POJO that stores the concept of evidence. A single document with
+ * an array of words (size of the dictionary).
  */
 public class DocumentEvidence {
     public static final int NUMBER_OF_WORDS_IN_DICT = 3567;
@@ -28,15 +29,11 @@ public class DocumentEvidence {
         return isWordInDocument;
     }
 
-    public void setIsWordInDocument(ArrayList<Boolean> isWordInDocument) {
-        this.isWordInDocument = isWordInDocument;
-    }
-
     @Override
     public String toString() {
-        return "Document{" +
+        return "DocumentEvidence{" +
                 "newsgroupId=" + newsgroupId +
-                ", isWordInDocument=TooLargeToDisplay" +
-                '}' + '\n';
+                ", isWordInDocument=" +
+                '}';
     }
 }

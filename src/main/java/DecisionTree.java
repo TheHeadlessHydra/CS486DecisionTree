@@ -1,4 +1,5 @@
 /**
+ * @author Serj
  * Decision Tree for splitting on words appearing in documents. The decision tree should
  * predict what newsgroup a document is in.
  */
@@ -6,18 +7,16 @@ public class DecisionTree {
     private Integer word = null;
     private DecisionTree wordExists = null;
     private DecisionTree wordDoesNotExist = null;
-    private final double prediction;
+    private final int prediction;
+    private final double informationGain;
 
     /**
      * Constructor that produces a leaf node
      * @param prediction the prediction of the type of newsgroup
      */
-    public DecisionTree(double prediction) {
+    public DecisionTree(int prediction, double informationGain) {
         this.prediction = prediction;
-    }
-
-    private boolean isLeaf() {
-        return word == null;
+        this.informationGain = informationGain;
     }
 
     public Integer getWord() {
@@ -44,33 +43,24 @@ public class DecisionTree {
         this.wordDoesNotExist = wordDoesNotExist;
     }
 
-    public double getPrediction() {
+    public int getPrediction() {
         return prediction;
+    }
+
+    public double getInformationGain() {
+        return informationGain;
     }
 
     @Override
     public String toString() {
         return "DecisionTree{" +
-                "word='" + word + '\'' +
+                "word=" + word +
                 ", wordExists=" + wordExists +
                 ", wordDoesNotExist=" + wordDoesNotExist +
                 ", prediction=" + prediction +
+                ", informationGain=" + informationGain +
                 '}';
     }
-
-    //public void print(String prefix, boolean isTail) {
-        /*
-        System.out.println(prefix + (isTail ? "|___" : "|---") + prediction);
-
-        if(wordExists != null && wordDoesNotExist != null) {
-            wordExists.print(prefix + (isTail ? "   " : "|   "), false);
-            wordDoesNotExist.print(prefix + (isTail ? "   " : "|   "), false);
-        } else if(wordExists != null) {
-            wordExists.print(prefix + (isTail ? "   " : "|   "), true);
-        } else if (wordDoesNotExist != null) {
-            wordDoesNotExist.print(prefix + (isTail ?"   " : "|   "), true);
-        }
-        */
 
     public void print(DecisionTree root, int level, String prefix) {
         if(root==null)
@@ -79,10 +69,10 @@ public class DecisionTree {
         if(level!=0){
             for(int i=0;i<level-1;i++)
                 System.out.print("|\t");
-            System.out.println("|-------"+prefix+" "+root.getPrediction());
+            System.out.println("|-------"+prefix+" "+root.getPrediction()+", IG: " + root.getInformationGain());
         }
         else {
-            System.out.println(root.getPrediction());
+            System.out.println(root.getPrediction() + ", IG: " + root.getInformationGain());
         }
         print(root.getWordDoesNotExist(), level+1, "(!Exists)");
 

@@ -1,7 +1,8 @@
 import java.util.ArrayList;
 
 /**
- * Created by Serj on 11/11/2015.
+ * @author Serj
+ * A leaf node representation that is stored in the pririty queue
  */
 public class Leaf {
     private final DecisionTree decisionTree;
