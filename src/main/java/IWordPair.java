@@ -17,4 +17,12 @@ public class IWordPair {
     public int getWord() {
         return word;
     }
+
+    @Override
+    public String toString() {
+        return "IWordPair{" +
+                "IValue=" + IValue +
+                ", word=" + word +
+                '}';
+    }
 }

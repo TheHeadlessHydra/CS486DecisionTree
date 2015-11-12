@@ -8,38 +8,57 @@ public class DecisionTreeLearner {
     private static final int ATHEISM = 1;
     private static final int GRAPHICS = 2;
     private static final int NUMBER_OF_WORDS = 3567;
+    private static final int NUMBER_OF_ITERATIONS = 10;
 
-    private final ArrayList<Document> evidenceData;
-    private DecisionTree decisionTree = null;
-    private PriorityQueue<Leaf> priorityQueue = new PriorityQueue<Leaf>(100, new LeafComparator());
+    public DecisionTree decisionTreeLearn(ArrayList<DocumentEvidence> documentEvidences) {
+        PriorityQueue<Leaf> priorityQueue = new PriorityQueue<Leaf>(NUMBER_OF_ITERATIONS, new LeafComparator());
 
-    public DecisionTreeLearner(ArrayList<Document> evidenceData) {
-        this.evidenceData = evidenceData;
-    }
-
-    public void learn() {
-
-        int estimate = pointEstimate(evidenceData);
+        int estimate = pointEstimate(documentEvidences);
         DecisionTree decisionTree = new DecisionTree(estimate);
-        IWordPair iWordPair = getBestFeature(evidenceData);
-        priorityQueue.add(new Leaf(decisionTree, evidenceData, iWordPair));
-        for(int i = 0; i < 100; i++) {
+        IWordPair iWordPair = getBestFeature(documentEvidences);
+
+        System.out.println("DecisionTreeLearner.decisionTreeLearn INITIAL best word pair: " + iWordPair);
+        priorityQueue.add(new Leaf(decisionTree, documentEvidences, iWordPair));
+        for(int i = 0; i < NUMBER_OF_ITERATIONS; i++) {
             Leaf bestInformationGain = priorityQueue.poll();
             DecisionTree localDecisionTree = bestInformationGain.getDecisionTree();
 
-            // child 1
-            //ArrayList<EvidenceData> limitedEvidenceAtheism = limitEvidenceList(
-             //       bestInformationGain.getEvidenceDatas(),
-             //       bestInformationGain.getiWordPair().getWord(),
-             //       0);
-            //int childEstimateAtheism = pointEstimate(limitedEvidenceAtheism);
-            //localDecisionTree.set
+            System.out.println("DecisionTreeLearner.decisionTreeLearn ================================================================= ");
+            System.out.println("DecisionTreeLearner.decisionTreeLearn getEvidenceDatas: "+ bestInformationGain.getEvidenceDatas().size());
+            System.out.println("DecisionTreeLearner.decisionTreeLearn getiWordPair: "+ bestInformationGain.getiWordPair());
 
-            // child 2
+            localDecisionTree.setWord(bestInformationGain.getiWordPair().getWord());
 
+            // child not in document
+            ArrayList<DocumentEvidence> limitedEvidenceIsNotIn = limitEvidenceList(
+                    bestInformationGain.getEvidenceDatas(),
+                    bestInformationGain.getiWordPair().getWord(),
+                    false);
+            System.out.println("DecisionTreeLearner.decisionTreeLearn limitedEvidenceIsNotIn: " + limitedEvidenceIsNotIn.size());
+            int childEstimateIsNotIn = pointEstimate(limitedEvidenceIsNotIn);
+            DecisionTree childDecisionTreeIsNotIn = new DecisionTree(childEstimateIsNotIn);
+            localDecisionTree.setWordDoesNotExist(childDecisionTreeIsNotIn);
+            IWordPair iWordPairChildIsNotIn = getBestFeature(limitedEvidenceIsNotIn);
+            System.out.println("DecisionTreeLearner.decisionTreeLearn iWordPairChildIsNotIn: " + iWordPairChildIsNotIn);
+            Leaf childLeafIsNotIn = new Leaf(childDecisionTreeIsNotIn, limitedEvidenceIsNotIn, iWordPairChildIsNotIn);
+            priorityQueue.add(childLeafIsNotIn);
 
+            // child in document
+            ArrayList<DocumentEvidence> limitedEvidenceIsIn = limitEvidenceList(
+                    bestInformationGain.getEvidenceDatas(),
+                    bestInformationGain.getiWordPair().getWord(),
+                    true);
+            System.out.println("DecisionTreeLearner.decisionTreeLearn limitedEvidenceIsIn: " + limitedEvidenceIsIn.size());
+            int childEstimateIsIn = pointEstimate(limitedEvidenceIsIn);
+            DecisionTree childDecisionTreeIsIn = new DecisionTree(childEstimateIsIn);
+            localDecisionTree.setWordExists(childDecisionTreeIsIn);
+            IWordPair iWordPairChildIsIn = getBestFeature(limitedEvidenceIsIn);
+            System.out.println("DecisionTreeLearner.decisionTreeLearn iWordPairChildIsIn: " + iWordPairChildIsIn);
+            Leaf childLeafIsIn = new Leaf(childDecisionTreeIsIn, limitedEvidenceIsIn, iWordPairChildIsIn);
+            priorityQueue.add(childLeafIsIn);
         }
-
+        return decisionTree;
+    }
 
         //Leaf leaf = new Leaf()
 
@@ -81,13 +100,12 @@ public class DecisionTreeLearner {
     end procedure
      */
 
-    }
-
-    private IWordPair getBestFeature(ArrayList<Document> evidenceData) {
+    private IWordPair getBestFeature(ArrayList<DocumentEvidence> documentEvidences) {
         Integer maxWord = 0;
         Double maxIValue = 0d;
         for(int i = 0; i < NUMBER_OF_WORDS; i++) {
-            Double IValue = algorithmA(evidenceData, i);
+            Double IValue = algorithmB(documentEvidences, i);
+            //System.out.println("DecisionTreeLearner.getBestFeature IValue: " + IValue);
             if(IValue > maxIValue) {
                 maxWord = i;
                 maxIValue = IValue;
@@ -96,18 +114,18 @@ public class DecisionTreeLearner {
         return new IWordPair(maxIValue, maxWord);
     }
 
-    private ArrayList<Document> limitEvidenceList(ArrayList<Document> evidenceDatas, int wordToSplitOn) {
-        ArrayList<Document> limitedEvidence = new ArrayList<Document>();
-        for(Document evidenceData : evidenceDatas) {
-            if(evidenceData.getWordId() == wordToSplitOn) {
-                limitedEvidence.add(evidenceData);
+    private ArrayList<DocumentEvidence> limitEvidenceList(ArrayList<DocumentEvidence> documentEvidences, int wordToSplitOn, boolean valueOfWordToSplitOn) {
+        ArrayList<DocumentEvidence> limitedEvidence = new ArrayList<DocumentEvidence>();
+        for(DocumentEvidence documentEvidence : documentEvidences) {
+            if(documentEvidence.getIsWordInDocument().get(wordToSplitOn).equals(valueOfWordToSplitOn)) {
+                limitedEvidence.add(documentEvidence);
             }
         }
         return limitedEvidence;
     }
 
     // I(E) - I(Esplit)
-    public double algorithmA(ArrayList<Document> evidenceData, int wordToSplitOn) {
+    public double algorithmA(ArrayList<DocumentEvidence> evidenceData, int wordToSplitOn) {
         if(evidenceData.isEmpty()) return 1d;
         double Ie = informationGain(evidenceData);
         double IeSplit = informationGainOnWordA(evidenceData, wordToSplitOn);
@@ -115,7 +133,7 @@ public class DecisionTreeLearner {
     }
 
     // I(E) - I(Esplit)
-    public double algorithmB(ArrayList<Document> evidenceData, int wordToSplitOn) {
+    public double algorithmB(ArrayList<DocumentEvidence> evidenceData, int wordToSplitOn) {
         if(evidenceData.isEmpty()) return 1d;
         double Ie = informationGain(evidenceData);
         double IeSplit = informationGainOnWordB(evidenceData, wordToSplitOn);
@@ -123,66 +141,54 @@ public class DecisionTreeLearner {
     }
 
     // I(E) = -P(atheism)*log(P(atheism)) - P(graphics)*log(P(graphics))
-    private double informationGain(ArrayList<Document> evidenceData) {
-        double IeP1 = -totalTimesLabelAppears(evidenceData, ATHEISM)*Math.log(totalTimesLabelAppears(evidenceData, ATHEISM));
-        double IeP2 = -totalTimesLabelAppears(evidenceData, GRAPHICS)*Math.log(totalTimesLabelAppears(evidenceData, GRAPHICS));
+    private double informationGain(ArrayList<DocumentEvidence> documentEvidences) {
+        double IeP1 = -totalTimesNewsgroupAppears(documentEvidences, ATHEISM)*Math.log(totalTimesNewsgroupAppears(documentEvidences, ATHEISM));
+        double IeP2 = -totalTimesNewsgroupAppears(documentEvidences, GRAPHICS)*Math.log(totalTimesNewsgroupAppears(documentEvidences, GRAPHICS));
         return IeP1 + IeP2;
     }
 
     // 0.5*I(E1) + 0.5*I(E2)
-    private double informationGainOnWordA(ArrayList<Document> evidenceData, int wordToSplitOn) {
-        double IeP1 = -timesWordAppears(evidenceData, wordToSplitOn, ATHEISM)*Math.log(timesWordAppears(evidenceData, wordToSplitOn, ATHEISM));
-        double IeP2 = -timesWordAppears(evidenceData, wordToSplitOn, GRAPHICS)*Math.log(timesWordAppears(evidenceData, wordToSplitOn, GRAPHICS));
-        return ((0.5d*IeP1) + (0.5d*IeP2));
+    private double informationGainOnWordA(ArrayList<DocumentEvidence> documentEvidences, int wordToSplitOn) {
+        ArrayList<DocumentEvidence> E1 = limitEvidenceList(documentEvidences, wordToSplitOn, false);
+        ArrayList<DocumentEvidence> E2 = limitEvidenceList(documentEvidences, wordToSplitOn, true);
+        double IE1 = informationGain(E1);
+        double IE2 = informationGain(E2);
+        double N1 = ((double)E1.size())/((double)documentEvidences.size());
+        double N2 = ((double)E2.size())/((double)documentEvidences.size());
+        return ((0.5d*IE1) + (0.5d*IE2));
     }
 
     // N1/N*I(E1) + N2/N*I(E2)
-    private double informationGainOnWordB(ArrayList<Document> evidenceData, int wordToSplitOn) {
-        double N1 = timesWordAppears(evidenceData, wordToSplitOn, ATHEISM);
-        double IeP1 = -N1*Math.log(N1);
-        double N2 = timesWordAppears(evidenceData, wordToSplitOn, GRAPHICS);
-        double IeP2 = -N2*Math.log(N2);
-        return ((N1*IeP1) + (N2*IeP2));
+    private double informationGainOnWordB(ArrayList<DocumentEvidence> documentEvidences, int wordToSplitOn) {
+        ArrayList<DocumentEvidence> E1 = limitEvidenceList(documentEvidences, wordToSplitOn, false);
+        ArrayList<DocumentEvidence> E2 = limitEvidenceList(documentEvidences, wordToSplitOn, true);
+        double IE1 = informationGain(E1);
+        double IE2 = informationGain(E2);
+        double N1 = ((double)E1.size())/((double)documentEvidences.size());
+        double N2 = ((double)E2.size())/((double)documentEvidences.size());
+        return ((N1*IE1) + (N2*IE2));
     }
 
     /**
-     * The number of times the given label appears given as a fraction of the entire evidence list
+     * The number of times the given newsgroup appears given as a fraction of the entire evidence list
      */
-    private double totalTimesLabelAppears(ArrayList<Document> evidence, Integer label) {
+    private double totalTimesNewsgroupAppears(ArrayList<DocumentEvidence> documentEvidences, Integer newsgroupToCheck) {
         int number = 0;
-        for(Document evidenceData : evidence) {
-            Integer newsgroup = evidenceData.getLabel();
-            if(newsgroup.equals(label)) {
+        for(DocumentEvidence documentEvidence : documentEvidences) {
+            Integer newsgroup = documentEvidence.getNewsgroupId();
+            if(newsgroup.equals(newsgroupToCheck)) {
                 number++;
             }
         }
-        return (number/(double)evidence.size());
+        return (number/(double)documentEvidences.size());
     }
 
-    /**
-     * The number of times the wordToCheckFor appears under the labelToCheckAgainst given as a fraction of the entire
-     * evidence list
-     */
-    private double timesWordAppears(ArrayList<Document> evidence, Integer wordToSplitOn, Integer labelToCheckAgainst) {
-        int number = 0;
-        for(Document evidenceData : evidence) {
-            Integer word = evidenceData.getWordId();
-            Integer label = evidenceData.getLabel();
-            if(word.equals(wordToSplitOn)) {
-                if(label.equals(labelToCheckAgainst)) {
-                    number++;
-                }
-            }
-        }
-        return (number/(double)evidence.size());
-    }
-
-    private int pointEstimate(ArrayList<Document> evidence) {
+    private int pointEstimate(ArrayList<DocumentEvidence> documentEvidences) {
         int numberOfAtheism = ATHEISM;
         int numberOfGraphics = GRAPHICS;
 
-        for(Document evidenceData : evidence) {
-            Integer newsgroup = evidenceData.getLabel();
+        for(DocumentEvidence documentEvidence : documentEvidences) {
+            Integer newsgroup = documentEvidence.getNewsgroupId();
             if(newsgroup.equals(ATHEISM)) {
                 numberOfAtheism++;
             } else if(newsgroup.equals(GRAPHICS)) {
@@ -194,4 +200,5 @@ public class DecisionTreeLearner {
 
         return (numberOfAtheism > numberOfGraphics ? ATHEISM : GRAPHICS);
     }
+
 }
