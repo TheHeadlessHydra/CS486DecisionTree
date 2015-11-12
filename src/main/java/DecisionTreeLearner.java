@@ -9,11 +9,11 @@ public class DecisionTreeLearner {
     private static final int GRAPHICS = 2;
     private static final int NUMBER_OF_WORDS = 3567;
 
-    private final ArrayList<EvidenceData> evidenceData;
+    private final ArrayList<Document> evidenceData;
     private DecisionTree decisionTree = null;
     private PriorityQueue<Leaf> priorityQueue = new PriorityQueue<Leaf>(100, new LeafComparator());
 
-    public DecisionTreeLearner(ArrayList<EvidenceData> evidenceData) {
+    public DecisionTreeLearner(ArrayList<Document> evidenceData) {
         this.evidenceData = evidenceData;
     }
 
@@ -21,24 +21,29 @@ public class DecisionTreeLearner {
 
         int estimate = pointEstimate(evidenceData);
         DecisionTree decisionTree = new DecisionTree(estimate);
+        IWordPair iWordPair = getBestFeature(evidenceData);
+        priorityQueue.add(new Leaf(decisionTree, evidenceData, iWordPair));
+        for(int i = 0; i < 100; i++) {
+            Leaf bestInformationGain = priorityQueue.poll();
+            DecisionTree localDecisionTree = bestInformationGain.getDecisionTree();
 
+            // child 1
+            //ArrayList<EvidenceData> limitedEvidenceAtheism = limitEvidenceList(
+             //       bestInformationGain.getEvidenceDatas(),
+             //       bestInformationGain.getiWordPair().getWord(),
+             //       0);
+            //int childEstimateAtheism = pointEstimate(limitedEvidenceAtheism);
+            //localDecisionTree.set
+
+            // child 2
+
+
+        }
 
 
         //Leaf leaf = new Leaf()
 
-
-
         /*
-         pointEstimate(E) to get the initial guess. This is done by just getting the one thats higher.
-         go through all words and find the one with the highest I value
-         priority queue =
-
-
-
-         */
-
-        /*
-
          get the pointEstimate using all evidence
          go through all words and find the one with the highest I value
          create priority queue with a single element, the one chosen above plus the DT
@@ -78,15 +83,31 @@ public class DecisionTreeLearner {
 
     }
 
-    private IWordPair getBestFeature(ArrayList<EvidenceData> evidenceData) {
+    private IWordPair getBestFeature(ArrayList<Document> evidenceData) {
+        Integer maxWord = 0;
+        Double maxIValue = 0d;
         for(int i = 0; i < NUMBER_OF_WORDS; i++) {
-            
+            Double IValue = algorithmA(evidenceData, i);
+            if(IValue > maxIValue) {
+                maxWord = i;
+                maxIValue = IValue;
+            }
         }
+        return new IWordPair(maxIValue, maxWord);
+    }
 
+    private ArrayList<Document> limitEvidenceList(ArrayList<Document> evidenceDatas, int wordToSplitOn) {
+        ArrayList<Document> limitedEvidence = new ArrayList<Document>();
+        for(Document evidenceData : evidenceDatas) {
+            if(evidenceData.getWordId() == wordToSplitOn) {
+                limitedEvidence.add(evidenceData);
+            }
+        }
+        return limitedEvidence;
     }
 
     // I(E) - I(Esplit)
-    public double algorithmA(ArrayList<EvidenceData> evidenceData, int wordToSplitOn) {
+    public double algorithmA(ArrayList<Document> evidenceData, int wordToSplitOn) {
         if(evidenceData.isEmpty()) return 1d;
         double Ie = informationGain(evidenceData);
         double IeSplit = informationGainOnWordA(evidenceData, wordToSplitOn);
@@ -94,7 +115,7 @@ public class DecisionTreeLearner {
     }
 
     // I(E) - I(Esplit)
-    public double algorithmB(ArrayList<EvidenceData> evidenceData, int wordToSplitOn) {
+    public double algorithmB(ArrayList<Document> evidenceData, int wordToSplitOn) {
         if(evidenceData.isEmpty()) return 1d;
         double Ie = informationGain(evidenceData);
         double IeSplit = informationGainOnWordB(evidenceData, wordToSplitOn);
@@ -102,21 +123,21 @@ public class DecisionTreeLearner {
     }
 
     // I(E) = -P(atheism)*log(P(atheism)) - P(graphics)*log(P(graphics))
-    private double informationGain(ArrayList<EvidenceData> evidenceData) {
+    private double informationGain(ArrayList<Document> evidenceData) {
         double IeP1 = -totalTimesLabelAppears(evidenceData, ATHEISM)*Math.log(totalTimesLabelAppears(evidenceData, ATHEISM));
         double IeP2 = -totalTimesLabelAppears(evidenceData, GRAPHICS)*Math.log(totalTimesLabelAppears(evidenceData, GRAPHICS));
         return IeP1 + IeP2;
     }
 
     // 0.5*I(E1) + 0.5*I(E2)
-    private double informationGainOnWordA(ArrayList<EvidenceData> evidenceData, int wordToSplitOn) {
+    private double informationGainOnWordA(ArrayList<Document> evidenceData, int wordToSplitOn) {
         double IeP1 = -timesWordAppears(evidenceData, wordToSplitOn, ATHEISM)*Math.log(timesWordAppears(evidenceData, wordToSplitOn, ATHEISM));
         double IeP2 = -timesWordAppears(evidenceData, wordToSplitOn, GRAPHICS)*Math.log(timesWordAppears(evidenceData, wordToSplitOn, GRAPHICS));
         return ((0.5d*IeP1) + (0.5d*IeP2));
     }
 
     // N1/N*I(E1) + N2/N*I(E2)
-    private double informationGainOnWordB(ArrayList<EvidenceData> evidenceData, int wordToSplitOn) {
+    private double informationGainOnWordB(ArrayList<Document> evidenceData, int wordToSplitOn) {
         double N1 = timesWordAppears(evidenceData, wordToSplitOn, ATHEISM);
         double IeP1 = -N1*Math.log(N1);
         double N2 = timesWordAppears(evidenceData, wordToSplitOn, GRAPHICS);
@@ -127,9 +148,9 @@ public class DecisionTreeLearner {
     /**
      * The number of times the given label appears given as a fraction of the entire evidence list
      */
-    private double totalTimesLabelAppears(ArrayList<EvidenceData> evidence, Integer label) {
+    private double totalTimesLabelAppears(ArrayList<Document> evidence, Integer label) {
         int number = 0;
-        for(EvidenceData evidenceData : evidence) {
+        for(Document evidenceData : evidence) {
             Integer newsgroup = evidenceData.getLabel();
             if(newsgroup.equals(label)) {
                 number++;
@@ -142,9 +163,9 @@ public class DecisionTreeLearner {
      * The number of times the wordToCheckFor appears under the labelToCheckAgainst given as a fraction of the entire
      * evidence list
      */
-    private double timesWordAppears(ArrayList<EvidenceData> evidence, Integer wordToSplitOn, Integer labelToCheckAgainst) {
+    private double timesWordAppears(ArrayList<Document> evidence, Integer wordToSplitOn, Integer labelToCheckAgainst) {
         int number = 0;
-        for(EvidenceData evidenceData : evidence) {
+        for(Document evidenceData : evidence) {
             Integer word = evidenceData.getWordId();
             Integer label = evidenceData.getLabel();
             if(word.equals(wordToSplitOn)) {
@@ -156,11 +177,11 @@ public class DecisionTreeLearner {
         return (number/(double)evidence.size());
     }
 
-    private int pointEstimate(ArrayList<EvidenceData> evidence) {
+    private int pointEstimate(ArrayList<Document> evidence) {
         int numberOfAtheism = ATHEISM;
         int numberOfGraphics = GRAPHICS;
 
-        for(EvidenceData evidenceData : evidence) {
+        for(Document evidenceData : evidence) {
             Integer newsgroup = evidenceData.getLabel();
             if(newsgroup.equals(ATHEISM)) {
                 numberOfAtheism++;

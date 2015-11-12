@@ -5,31 +5,24 @@ import java.util.ArrayList;
  */
 public class Leaf {
     private final DecisionTree decisionTree;
-    private final ArrayList<EvidenceData> evidenceDatas;
-    private final Integer wordToSplitOn;
-    private final Double informationGainOfWordToSplitOn;
+    private final ArrayList<Document> evidenceDatas;
+    private final IWordPair iWordPair;
 
-
-    public Leaf(DecisionTree decisionTree, ArrayList<EvidenceData> evidenceDatas, Integer wordToSplitOn, Double informationGainOfWordToSplitOn) {
+    public Leaf(DecisionTree decisionTree, ArrayList<Document> evidenceDatas, IWordPair iWordPair) {
         this.decisionTree = decisionTree;
         this.evidenceDatas = evidenceDatas;
-        this.wordToSplitOn = wordToSplitOn;
-        this.informationGainOfWordToSplitOn = informationGainOfWordToSplitOn;
+        this.iWordPair = iWordPair;
     }
 
     public DecisionTree getDecisionTree() {
         return decisionTree;
     }
 
-    public ArrayList<EvidenceData> getEvidenceDatas() {
+    public ArrayList<Document> getEvidenceDatas() {
         return evidenceDatas;
     }
 
-    public Integer getWordToSplitOn() {
-        return wordToSplitOn;
-    }
-
-    public Double getInformationGainOfWordToSplitOn() {
-        return informationGainOfWordToSplitOn;
+    public IWordPair getiWordPair() {
+        return iWordPair;
     }
 }

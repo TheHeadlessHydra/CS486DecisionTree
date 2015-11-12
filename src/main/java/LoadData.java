@@ -9,20 +9,19 @@ public class LoadData {
         InputStreamReader testDataInputStreamReader = new InputStreamReader(LoadData.class.getResourceAsStream("testData.txt"));
         InputStreamReader testLabelInputStreamReader = new InputStreamReader(LoadData.class.getResourceAsStream("testLabel.txt"));
 
-        ArrayList<EvidenceData> testEvidenceData = new ArrayList<EvidenceData>();
+        ArrayList<Document> testEvidenceData = new ArrayList<Document>();
         ArrayList<Integer> testLabel = new ArrayList<Integer>();
 
         try {
-            BufferedReader testDataReader = new BufferedReader(testLabelInputStreamReader);
+            BufferedReader labelReader = new BufferedReader(testLabelInputStreamReader);
 
             String line;
-            while ((line = testDataReader.readLine()) != null) {
+            while ((line = labelReader.readLine()) != null) {
                 testLabel.add(Integer.parseInt(line));
             }
         } catch(Exception e) {
             System.out.println("Failure when loading in test label set: " + e);
         }
-
 
         try {
             BufferedReader testDataReader = new BufferedReader(testDataInputStreamReader);
@@ -32,7 +31,6 @@ public class LoadData {
                 String[] split = line.split("\t");
                 int docId = Integer.parseInt(split[0]);
                 int wordId = Integer.parseInt(split[1]);
-                testEvidenceData.add(new EvidenceData(testLabel.get(docId), wordId));
             }
         } catch(Exception e) {
             System.out.println("Failure when loading in test data set: " + e);
