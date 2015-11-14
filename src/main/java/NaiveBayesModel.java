@@ -38,31 +38,18 @@ public class NaiveBayesModel {
                 }
             }
         }
+        System.out.println("NaiveBayesModel.calculateBayesModel probabilityAtheismIfWordPresent: " + probabilityAtheismIfWordPresent);
+        System.out.println("NaiveBayesModel.calculateBayesModel probabilityGraphicsIfWordPresent: " + probabilityGraphicsIfWordPresent);
         int numberOfGraphics = documentEvidences.size() - numberOfAtheism;
         for(int i = 0; i < probabilityAtheismIfWordPresent.size(); i++) {
-            probabilityAtheismIfWordPresent.set(i, probabilityAtheismIfWordPresent.get(i)/(double)numberOfAtheism);
-            probabilityGraphicsIfWordPresent.set(i, probabilityGraphicsIfWordPresent.get(i)/(double)numberOfGraphics);
+            probabilityAtheismIfWordPresent.set(i, (probabilityAtheismIfWordPresent.get(i)+1)/((double)numberOfAtheism + 2d));
+            probabilityGraphicsIfWordPresent.set(i, (probabilityGraphicsIfWordPresent.get(i)+1)/((double)numberOfGraphics + 2d));
         }
         probabilityOfAtheism = (double)numberOfAtheism/(double)documentEvidences.size();
-    }
 
-    public double testSpecific(boolean isTestingAtheism, DocumentEvidence documentEvidence) {
-        if(probabilityOfAtheism == null) {
-            throw new IllegalArgumentException("Must call calculateBayesModel with a model first");
-        }
-
-        double finalProbability = isTestingAtheism ? probabilityOfAtheism : (1-probabilityOfAtheism);
-        for(int i = 0; i < documentEvidence.getIsWordInDocument().size(); i++) {
-            double currentProbability = isTestingAtheism ? probabilityAtheismIfWordPresent.get(i) : probabilityGraphicsIfWordPresent.get(i);
-
-            // if word is not present, must take 1 - theta
-            if(!documentEvidence.getIsWordInDocument().get(i)) { // means word is in document evidence
-                currentProbability = 1d - currentProbability;
-            }
-
-            finalProbability = finalProbability*currentProbability;
-        }
-        return finalProbability;
+        System.out.println("NaiveBayesModel.calculateBayesModel probabilityOfAtheism: " + probabilityOfAtheism);
+        System.out.println("NaiveBayesModel.calculateBayesModel probabilityAtheismIfWordPresent: " + probabilityAtheismIfWordPresent);
+        System.out.println("NaiveBayesModel.calculateBayesModel probabilityGraphicsIfWordPresent: " + probabilityGraphicsIfWordPresent);
     }
 
     public int predictLabelGivenEvidence(DocumentEvidence documentEvidence) {
@@ -70,18 +57,27 @@ public class NaiveBayesModel {
             throw new IllegalArgumentException("Must call calculateBayesModel with a model first");
         }
 
-        double finalProbabilityAtheism = 1;
-        double finalProbabilityGraphics = 1;
+        double finalProbabilityAtheism = 0;
+        double finalProbabilityGraphics = 0;
         for(int i = 0; i < documentEvidence.getIsWordInDocument().size(); i++) {
-            finalProbabilityAtheism = finalProbabilityAtheism*probabilityAtheismIfWordPresent.get(i);
-            finalProbabilityGraphics = finalProbabilityGraphics*(1-probabilityAtheismIfWordPresent.get(i));
+            double currentProbabilityAtheism = probabilityAtheismIfWordPresent.get(i);
+            double currentProbabilityGraphics = probabilityGraphicsIfWordPresent.get(i);
+            if(documentEvidence.getIsWordInDocument().get(i)) {
+                finalProbabilityAtheism += Math.log(currentProbabilityAtheism);
+                finalProbabilityGraphics += Math.log(currentProbabilityGraphics);
+            } else {
+                finalProbabilityAtheism += Math.log(1-currentProbabilityAtheism);
+                finalProbabilityGraphics += Math.log(1-currentProbabilityGraphics);
+            }
         }
 
-        double probabilityAtheism = probabilityOfAtheism*finalProbabilityAtheism;
-        double probabilityGraphics = (1-probabilityOfAtheism)*finalProbabilityGraphics;
+        double probabilityAtheism = Math.log(probabilityOfAtheism)+finalProbabilityAtheism;
+        double probabilityGraphics = Math.log(1 - probabilityOfAtheism)+finalProbabilityGraphics;
 
         return (probabilityAtheism > probabilityGraphics) ? ATHEISM : GRAPHICS;
     }
+
+    public int 
 
     private void resetProbabilities() {
         probabilityOfAtheism = null;
