@@ -1,7 +1,8 @@
 import java.util.ArrayList;
+import java.util.PriorityQueue;
 
 /**
- * Created by Serj on 14/11/2015.
+ * Calculates probabilities using maximum likelihood
  */
 public class NaiveBayesModel {
     public final static int NUMBER_OF_WORDS = 3567;
@@ -20,7 +21,6 @@ public class NaiveBayesModel {
         resetProbabilities();
 
         int numberOfAtheism = 0;
-        ArrayList<Integer> numberOfTimesWordPresent = new ArrayList<Integer>(NUMBER_OF_WORDS);
         for(DocumentEvidence documentEvidence : documentEvidences) {
             ArrayList<Boolean> isWordInDocument = documentEvidence.getIsWordInDocument();
             boolean isAtheism = false;
@@ -38,18 +38,12 @@ public class NaiveBayesModel {
                 }
             }
         }
-        System.out.println("NaiveBayesModel.calculateBayesModel probabilityAtheismIfWordPresent: " + probabilityAtheismIfWordPresent);
-        System.out.println("NaiveBayesModel.calculateBayesModel probabilityGraphicsIfWordPresent: " + probabilityGraphicsIfWordPresent);
         int numberOfGraphics = documentEvidences.size() - numberOfAtheism;
         for(int i = 0; i < probabilityAtheismIfWordPresent.size(); i++) {
             probabilityAtheismIfWordPresent.set(i, (probabilityAtheismIfWordPresent.get(i)+1)/((double)numberOfAtheism + 2d));
             probabilityGraphicsIfWordPresent.set(i, (probabilityGraphicsIfWordPresent.get(i)+1)/((double)numberOfGraphics + 2d));
         }
         probabilityOfAtheism = (double)numberOfAtheism/(double)documentEvidences.size();
-
-        System.out.println("NaiveBayesModel.calculateBayesModel probabilityOfAtheism: " + probabilityOfAtheism);
-        System.out.println("NaiveBayesModel.calculateBayesModel probabilityAtheismIfWordPresent: " + probabilityAtheismIfWordPresent);
-        System.out.println("NaiveBayesModel.calculateBayesModel probabilityGraphicsIfWordPresent: " + probabilityGraphicsIfWordPresent);
     }
 
     public int predictLabelGivenEvidence(DocumentEvidence documentEvidence) {
@@ -77,7 +71,23 @@ public class NaiveBayesModel {
         return (probabilityAtheism > probabilityGraphics) ? ATHEISM : GRAPHICS;
     }
 
-    public int 
+    public ArrayList<String> topDiscriminatoryWords(ArrayList<String> wordSet, int numberOfTopWordsToGet) {
+        PriorityQueue<DiscriminatoryWord> priorityQueue = new PriorityQueue<DiscriminatoryWord>(NUMBER_OF_WORDS, new DiscriminatoryWordComparator());
+
+        for(int i = 0; i < NUMBER_OF_WORDS; i++) {
+            double logProbabilityAtheism = Math.log(probabilityAtheismIfWordPresent.get(i));
+            double logProbabilityGraphics= Math.log(probabilityGraphicsIfWordPresent.get(i));
+            DiscriminatoryWord discriminatoryWord = new DiscriminatoryWord(i, Math.abs(logProbabilityAtheism - logProbabilityGraphics));
+            priorityQueue.add(discriminatoryWord);
+        }
+
+        ArrayList<String> topDiscriminatoryWords = new ArrayList<String>(numberOfTopWordsToGet);
+        for(int i = 0; i < numberOfTopWordsToGet; i++) {
+            DiscriminatoryWord discriminatoryWord = priorityQueue.poll();
+            topDiscriminatoryWords.add(wordSet.get(discriminatoryWord.getWord()-1));
+        }
+        return topDiscriminatoryWords;
+    }
 
     private void resetProbabilities() {
         probabilityOfAtheism = null;

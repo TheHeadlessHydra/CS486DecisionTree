@@ -77,6 +77,40 @@ public class LoadAndTestData {
         }
 
         /**
+         * Load the words
+         */
+        InputStreamReader wordInput = new InputStreamReader(LoadAndTestData.class.getResourceAsStream("words.txt"));
+        ArrayList<String> words = new ArrayList<String>();
+        try {
+            BufferedReader wordReader = new BufferedReader(wordInput);
+
+            String line;
+            while ((line = wordReader.readLine()) != null) {
+                words.add(line);
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+            System.out.println("Failure when loading in words: " + e);
+            return;
+        }
+        try {
+            BufferedReader dataReader = new BufferedReader(testDataInput);
+
+            String line;
+            while ((line = dataReader.readLine()) != null) {
+                String[] split = line.split("\t");
+                int docId = Integer.parseInt(split[0]);
+                int wordId = Integer.parseInt(split[1]);
+                DocumentEvidence documentEvidence = testDocumentEvidences.get(docId-1);
+                documentEvidence.getIsWordInDocument().set(wordId, true);
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+            System.out.println("Failure when loading in data set: " + e);
+            return;
+        }
+
+        /**
          * Below will print the decision tree up to 10 nodes. You must manually go into
          * DecisionTreeLearner and change the algorithm from algorithmA to algorithmB depending on which
          * one you wish to test.
@@ -134,9 +168,9 @@ public class LoadAndTestData {
         System.out.println("DONE---------------------------------------------------------------------------------------");
         */
 
+        NaiveBayesModel naiveBayesModel = new NaiveBayesModel();
+        naiveBayesModel.calculateBayesModel(documentEvidences);
         {
-            NaiveBayesModel naiveBayesModel = new NaiveBayesModel();
-            naiveBayesModel.calculateBayesModel(documentEvidences);
             int numberCorrect = 0;
             for (DocumentEvidence documentEvidence : documentEvidences) {
                 int prediction = naiveBayesModel.predictLabelGivenEvidence(documentEvidence);
@@ -148,8 +182,6 @@ public class LoadAndTestData {
             System.out.println("perc correct train data: " + percCorrect);
         }
         {
-            NaiveBayesModel naiveBayesModel = new NaiveBayesModel();
-            naiveBayesModel.calculateBayesModel(documentEvidences);
             int numberCorrect = 0;
             for (DocumentEvidence documentEvidence : testDocumentEvidences) {
                 int prediction = naiveBayesModel.predictLabelGivenEvidence(documentEvidence);
@@ -160,6 +192,12 @@ public class LoadAndTestData {
             double percCorrect = (double) numberCorrect / (double) documentEvidences.size();
             System.out.println("perc correct test data: " + percCorrect);
         }
+        ArrayList<String> topDiscriminatoryWords = naiveBayesModel.topDiscriminatoryWords(words, 10);
+        System.out.println("Top discriminatory words in order:");
+        for(String word : topDiscriminatoryWords) {
+            System.out.println(word);
+        }
+
 
     }
 }
