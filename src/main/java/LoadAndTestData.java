@@ -81,16 +81,17 @@ public class LoadAndTestData {
          * DecisionTreeLearner and change the algorithm from algorithmA to algorithmB depending on which
          * one you wish to test.
          */
+        /*
         DecisionTreeLearner decisionTreeLearner = new DecisionTreeLearner(10);
         DecisionTree decisionTree = decisionTreeLearner.decisionTreeLearn(documentEvidences);
         decisionTree.print(decisionTree, 0, "");
-
+*/
         /**
          * Below is the code to generate the data needed for the graphs. You must manually go into
          * DecisionTreeLearner and change the algorithm from algorithmA to algorithmB depending on which
          * one you wish to test.
          */
-        /*
+/*
         // trained data tested against test data
         System.out.println("Against test data --------------------------------------------");
         ArrayList<Double> percentageCorrectTest= new ArrayList<Double>(100);
@@ -132,5 +133,33 @@ public class LoadAndTestData {
         }
         System.out.println("DONE---------------------------------------------------------------------------------------");
         */
+
+        {
+            NaiveBayesModel naiveBayesModel = new NaiveBayesModel();
+            naiveBayesModel.calculateBayesModel(documentEvidences);
+            int numberCorrect = 0;
+            for (DocumentEvidence documentEvidence : documentEvidences) {
+                int prediction = naiveBayesModel.predictLabelGivenEvidence(documentEvidence);
+                if (prediction == documentEvidence.getNewsgroupId()) {
+                    numberCorrect++;
+                }
+            }
+            double percCorrect = (double) numberCorrect / (double) documentEvidences.size();
+            System.out.println("perc correct train data: " + percCorrect);
+        }
+        {
+            NaiveBayesModel naiveBayesModel = new NaiveBayesModel();
+            naiveBayesModel.calculateBayesModel(documentEvidences);
+            int numberCorrect = 0;
+            for (DocumentEvidence documentEvidence : testDocumentEvidences) {
+                int prediction = naiveBayesModel.predictLabelGivenEvidence(documentEvidence);
+                if (prediction == documentEvidence.getNewsgroupId()) {
+                    numberCorrect++;
+                }
+            }
+            double percCorrect = (double) numberCorrect / (double) documentEvidences.size();
+            System.out.println("perc correct test data: " + percCorrect);
+        }
+
     }
 }
